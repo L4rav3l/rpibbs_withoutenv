@@ -1,19 +1,22 @@
+using RPIBBS.Authentication;
+
 namespace RPIBBS.Core;
 
 public class ClientManager
 {
     private readonly Commands _commands = new Commands();
+    private readonly AuthManager _authManager = new AuthManager();
 
-    public void HandleClient(TcpClient client)
+    public async void HandleClient(TcpClient client)
     {
         using(client)
         using(NetworkStream stream = client.GetStream())
         {
             _commands.WriteCopyright(stream);
-            _commands.DisableTelnetEcho(stream);
 
-            string input = _commands.ReadPassword(stream);
-            Console.WriteLine(input);
+            Thread.Sleep(500);
+
+            _authManager.Run(stream, _commands);
         }
     }
 }
