@@ -10,6 +10,10 @@ public class ClientManager
         using(NetworkStream stream = client.GetStream())
         {
             _commands.WriteCopyright(stream);
+            _commands.DisableTelnetEcho(stream);
+
+            string input = _commands.ReadPassword(stream);
+            Console.WriteLine(input);
         }
     }
 }
