@@ -26,13 +26,19 @@ public class Commands
         WriteLine(stream, $"Welcome to {Environment.GetEnvironmentVariable("BBS_NAME")}\r\n");
         WriteLine(stream, $"TELNET: {Environment.GetEnvironmentVariable("BBS_HOSTNAME")}:{Environment.GetEnvironmentVariable("BBS_HOSTPORT")}");
 
-        WriteLine(stream, "[== JUST FUN AND EDUCATION PURPOSES ==]");
+        WriteLine(stream, "[== JUST FUN AND EDUCATION PURPOSES ==]\r\n");
     }
 
     public void EnableTelnetEcho(NetworkStream stream)
     {
-        byte[] enableEcho = { 0xFF, 0xFC, 0x01 };
-        stream.Write(enableEcho, 0, enableEcho.Length);
+        byte[] cmds =
+        {
+            0xFF, 0xFC, 0x03,
+            0xFF, 0xFE, 0x03,
+            0xFF, 0xFC, 0x01
+        };
+
+        stream.Write(cmds, 0, cmds.Length);
     }
 
     public void DisableTelnetEcho(NetworkStream stream)
@@ -54,12 +60,98 @@ public class Commands
         while(true)
         {
             int b = stream.ReadByte();
+
+            if(b == 255)
+            {
+                stream.ReadByte();
+                stream.ReadByte();
+
+                continue;
+            }
+
             if (b == -1) return null;
             if (b == '\n') break;
             if (b != '\r') sb.Append((char)b);
         }
 
         return sb.ToString();
+    }
+
+    public string ReadMail(NetworkStream stream, int StartLine)
+    {
+        var lines = new List<StringBuilder> { new StringBuilder() };
+        int line = 0;
+        int col = 0;
+
+        for(int i = 0; i < StartLine; i++)
+        {
+            lines.Insert(++line, new StringBuilder());
+        }
+
+        while (true)
+        {
+            int b = stream.ReadByte();
+            if (b == -1) return null;
+
+            if (b == 255)
+            {
+                stream.ReadByte();
+                stream.ReadByte();
+                continue;
+            }
+
+            if(b == 127 && col > 0)
+            {
+                lines[line].Remove(col -1, 1);
+                col--;
+                
+                if(line-- > StartLine)
+                {
+                    Write(stream, "\b \b");
+                }
+                
+                continue;
+            }
+
+            if (b == 27)
+            {
+                int b2 = stream.ReadByte();
+                if (b2 == 91)
+                {
+                    int arrow = stream.ReadByte();
+
+                    if (arrow == 65 && line > StartLine) line--;
+                    if (arrow == 66 && line < lines.Count - 1) line++;
+                    if (arrow == 68 && col > 0) col--;
+                    if (arrow == 67 && col < lines[line].Length) col++;
+
+                    col = Math.Min(col, lines[line].Length);
+                    Write(stream, $"\x1b[{line + 1};{col + 1}H");
+                    Write(stream, "\b");
+                    continue;
+                }
+            }
+
+            if (b == 13)
+            {
+                lines.Insert(++line, new StringBuilder());
+                col = 0;
+                Write(stream, "\r\n");
+                continue;
+            }
+
+            if (b == 4)
+                break;
+
+            if (b != '\r')
+            {
+                lines[line].Insert(col, (char)b);
+                Write(stream, ((char)b).ToString());
+                col++;
+            }
+        }
+
+        return string.Join("\r\n", lines.Select(l => l.ToString()));
     }
 
     public string ReadPassword(NetworkStream stream)
@@ -69,6 +161,7 @@ public class Commands
         while(true)
         {
             int b = stream.ReadByte();
+
             if(b == -1) return null;
 
             if(b == 255)

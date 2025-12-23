@@ -8,43 +8,50 @@ public class AuthManager
     private Commands _commands;
     private Postgresql _conn;
     private Login _login;
-    private Registration _registration;
-    private Encrypting _encrypting;
+    //private Registration _registration;
 
     public async Task<bool> Run(NetworkStream stream, Commands commands)
     {
         _commands = commands;
         _conn = new Postgresql();
         _login = new Login();
-        _registration = new Registration();
-        _encrypting = new Encrypting();
+        //_registration = new Registration();
 
-        _commands.Write(stream, "Username: ");
-        string username = _commands.ReadLine(stream);
+        int? id = 0;
+        bool status = false;
+        bool userTaken = false;
 
-        await using(var conn = await _conn.GetOpenConnectionAsync())
+        while(true)
         {
-            await using(var usernameTaken = new NpgsqlCommand("SELECT * FROM users WHERE username = @username", conn))
+            _commands.Write(stream, "Username: ");
+            string username = _commands.ReadLine(stream);
+
+            await using(var conn = await _conn.GetOpenConnectionAsync())
             {
-                usernameTaken.Parameters.AddWithValue("username", username);
-
-                await using(var reader = await usernameTaken.ExecuteReaderAsync())
+                await using(var usernameTaken = new NpgsqlCommand("SELECT * FROM users WHERE username = @username", conn))
                 {
-                    if(await reader.ReadAsync())
-                    {
+                    usernameTaken.Parameters.AddWithValue("username", username);
 
-                    } else {
-                        
+                    await using(var reader = await usernameTaken.ExecuteReaderAsync())
+                    {
+                        if(await reader.ReadAsync())
+                        {
+                            userTaken = true;
+                        } else {
+                            userTaken = false;
+                        }
                     }
                 }
             }
+
+            if(userTaken)
+            {
+                id = await _login.Run(username, stream, _commands, _conn);
+            } else {
+                
+            }
         }
-        
-        _commands.DisableTelnetEcho(stream);
 
-        _commands.Write(stream, "Password: ");
-        string password = _commands.ReadPassword(stream);
-
-        return true;
+        return status;
     }
 }

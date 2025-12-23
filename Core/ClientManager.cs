@@ -16,7 +16,7 @@ public class ClientManager
 
             Thread.Sleep(500);
 
-            _authManager.Run(stream, _commands);
+            await _authManager.Run(stream, _commands);
         }
     }
 }
