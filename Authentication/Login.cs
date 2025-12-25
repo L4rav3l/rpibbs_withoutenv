@@ -1,5 +1,7 @@
 using Npgsql;
+using System.Threading;
 using RPIBBS.Core;
+using MimeKit;
 
 namespace RPIBBS.Authentication;
 
@@ -8,6 +10,7 @@ public class Login
 
     private Commands _commands;
     private Encrypting _encrypt = new Encrypting();
+    private Mail _mail = new Mail();
 
     public async Task<int?> Run(string username, NetworkStream stream, Commands commands, Postgresql _connection)
     {
@@ -67,7 +70,28 @@ public class Login
 
                     string data = _commands.ReadMail(stream, 3);
 
+                    using(var SmtpClient = _mail.CreateSmtpClient())
+                    {
+                        var message = new MimeMessage();
+                        message.From.Add(new MailboxAddress("System", Environment.GetEnvironmentVariable("SMTP_USERNAME")));
+                        message.To.Add(new MailboxAddress("Admin", Environment.GetEnvironmentVariable("BBS_ADMIN_MAIL")));
+
+                        message.Subject = "Password recorvery";
+                        message.Body = new TextPart("plain")
+                        {
+                            Text = data
+                        };
+
+                        SmtpClient.Send(message);
+                        SmtpClient.Disconnect(true);
+                    }
+
                     _commands.EnableTelnetEcho(stream);
+                    _commands.Write(stream, "\x1B[2J\x1B[H");
+                    _commands.Write(stream, "A password recovery email has been sent.");
+                    _commands.Write(stream, "\x1B[2J\x1B[H");
+
+                    Thread.Sleep(1000);
 
                     break;
                 } else if(input.ToLower() == "n")

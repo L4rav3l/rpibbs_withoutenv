@@ -1,5 +1,5 @@
-using Mailkit.Net.Smtp;
-using Mailkit.Security;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 
 namespace RPIBBS.Core;
 

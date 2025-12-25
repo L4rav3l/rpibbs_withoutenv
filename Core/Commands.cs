@@ -151,7 +151,13 @@ public class Commands
             }
         }
 
-        return string.Join("\r\n", lines.Select(l => l.ToString()));
+        var final = new StringBuilder();
+        for (int i = StartLine + 1; i < lines.Count; i++)
+        {
+            final.AppendLine(lines[i].ToString());
+        }
+
+        return final.ToString();
     }
 
     public string ReadPassword(NetworkStream stream)
