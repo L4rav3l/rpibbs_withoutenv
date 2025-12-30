@@ -16,7 +16,12 @@ public class ClientManager
 
             Thread.Sleep(500);
 
-            await _authManager.Run(stream, _commands);
+            int id = await _authManager.Run(stream, _commands);
+
+            while(true)
+            {
+                _commands.Write(stream, "Logged.");
+            }
         }
     }
 }

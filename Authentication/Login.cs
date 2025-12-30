@@ -15,7 +15,7 @@ public class Login
     public async Task<int?> Run(string username, NetworkStream stream, Commands commands, Postgresql _connection)
     {
         _commands = commands;
-        int status = 0;
+        int? status = null;
 
         for(int i = 1; i < 6; i++)
         {
@@ -40,7 +40,7 @@ public class Login
                             status = reader.GetInt32(reader.GetOrdinal("id"));
                             break;
                         } else {
-                            status = 0;
+                            status = null;
                         }
                     }
                 }
@@ -52,7 +52,7 @@ public class Login
 
         _commands.EnableTelnetEcho(stream);
 
-        if(status == 0)
+        if(status == null)
         {
             while(true)
             {
