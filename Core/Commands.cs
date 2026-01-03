@@ -206,21 +206,37 @@ public class Commands
     
     public (int width, int height) GetScreenSize(NetworkStream stream)
     {
-        stream.Write(new byte[] { 255, 253, 31});
+        stream.Write(new byte[] { 255, 253, 31 });
 
-        var buffer = new byte[32];
-        stream.ReadTimeout = 2000;
+        var data = new List<byte>();
+        var start = DateTime.Now;
 
-        int read = stream.Read(buffer, 0, buffer.Length);
-
-        if (read >= 9 &&
-            buffer[0] == 255 &&
-            buffer[1] == 250 &&
-            buffer[2] == 31)   
+        while ((DateTime.Now - start).TotalMilliseconds < 2000)
         {
-            int w = buffer[3] << 8 | buffer[4];
-            int h = buffer[5] << 8 | buffer[6];
-            return (w, h);
+            int b = stream.ReadByte();
+            if (b == -1) break;
+
+            data.Add((byte)b);
+
+            int n = data.Count;
+            if (n >= 9 &&
+                data[n - 9] == 255 &&
+                data[n - 8] == 250 &&
+                data[n - 7] == 31  &&
+                data[n - 2] == 255 &&
+                data[n - 1] == 240)
+            {
+                byte w1 = data[n - 6];
+                byte w2 = data[n - 5];
+                byte h1 = data[n - 4];
+                byte h2 = data[n - 3];
+
+                int width  = (w1 << 8) | w2;
+                int height = (h1 << 8) | h2;
+
+                if (width >= 40 && height >= 10)
+                    return (width, height);
+            }
         }
 
         return (80, 24);
@@ -232,9 +248,27 @@ public class Commands
         stream.Write(data, 0, data.Length);
     }
 
+    public void SetColumn(NetworkStream stream, int column)
+    {
+        var data = Encoding.ASCII.GetBytes($"\x1b[{column}G");
+        stream.Write(data, 0, data.Length);
+    }
+
     public void ClearConsole(NetworkStream stream)
     {
         var data = Encoding.ASCII.GetBytes("\x1B[2J\x1B[H");
+        stream.Write(data, 0, data.Length);
+    }
+
+    private void DisableCursor(NetworkStream stream)
+    {
+        var data = Encoding.ASCII.GetBytes("\x1B[?25l");
+        stream.Write(data, 0, data.Length);
+    }
+
+    private void EnableCursor(NetworkStream stream)
+    {
+        var data = Encoding.ASCII.GetBytes("\x1B[?25h");
         stream.Write(data, 0, data.Length);
     }
 }
