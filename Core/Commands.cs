@@ -225,4 +225,16 @@ public class Commands
 
         return (80, 24);
     }
+
+    public void SetRow(NetworkStream stream, int row)
+    {
+        var data = Encoding.ASCII.GetBytes($"\x1b[{row};1H");
+        stream.Write(data, 0, data.Length);
+    }
+
+    public void ClearConsole(NetworkStream stream)
+    {
+        var data = Encoding.ASCII.GetBytes("\x1B[2J\x1B[H");
+        stream.Write(data, 0, data.Length);
+    }
 }

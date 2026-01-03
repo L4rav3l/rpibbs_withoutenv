@@ -4,7 +4,16 @@ public class Menu
 {
     public async Task Run(string _username, Commands _commands, NetworkStream stream)
     {
-        var terminalHeight = _commands.GetScreenSize(stream);
-        Console.Write($"{terminalHeight.width}, {terminalHeight.height}");
+        _commands.ClearConsole(stream);
+     
+        var terminal = _commands.GetScreenSize(stream);
+     
+        _commands.SetRow(stream, terminal.height / 4);
+        _commands.Write(stream, "cica");
+
+        while(true)
+        {
+
+        }
     }
 }
