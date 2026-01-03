@@ -260,13 +260,13 @@ public class Commands
         stream.Write(data, 0, data.Length);
     }
 
-    private void DisableCursor(NetworkStream stream)
+    public void DisableCursor(NetworkStream stream)
     {
         var data = Encoding.ASCII.GetBytes("\x1B[?25l");
         stream.Write(data, 0, data.Length);
     }
 
-    private void EnableCursor(NetworkStream stream)
+    public void EnableCursor(NetworkStream stream)
     {
         var data = Encoding.ASCII.GetBytes("\x1B[?25h");
         stream.Write(data, 0, data.Length);

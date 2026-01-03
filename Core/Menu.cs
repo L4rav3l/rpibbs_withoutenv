@@ -29,6 +29,7 @@ public class Menu
         _commands.Write(stream, "        \\/                        \\/        \\/        \\/ ");
 
         _commands.DisableTelnetEcho(stream);
+        _commands.DisableCursor(stream);
 
         while(true)
         {
