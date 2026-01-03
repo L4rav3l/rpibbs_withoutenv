@@ -203,4 +203,26 @@ public class Commands
 
         return password.ToString();
     }
+    
+    public (int width, int height) GetScreenSize(NetworkStream stream)
+    {
+        stream.Write(new byte[] { 255, 253, 31});
+
+        var buffer = new byte[32];
+        stream.ReadTimeout = 2000;
+
+        int read = stream.Read(buffer, 0, buffer.Length);
+
+        if (read >= 9 &&
+            buffer[0] == 255 &&
+            buffer[1] == 250 &&
+            buffer[2] == 31)   
+        {
+            int w = buffer[3] << 8 | buffer[4];
+            int h = buffer[5] << 8 | buffer[6];
+            return (w, h);
+        }
+
+        return (80, 24);
+    }
 }

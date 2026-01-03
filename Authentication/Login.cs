@@ -89,6 +89,7 @@ public class Login
                     _commands.EnableTelnetEcho(stream);
                     _commands.Write(stream, "\x1B[2J\x1B[H");
                     _commands.Write(stream, "A password recovery email has been sent.");
+                    Thread.Sleep(2000);
                     _commands.Write(stream, "\x1B[2J\x1B[H");
 
                     Thread.Sleep(1000);
